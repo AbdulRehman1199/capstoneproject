@@ -1,0 +1,120 @@
+"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Header from "../components/header";
+import Footer from "../components/footer";
+import Image from "next/image";
+import { Suspense } from "react";
+
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  imageUrl: string;
+  isNew: boolean;
+  category: string;
+  salePrice?: number;
+};
+
+export default function Products() {
+  const [products, setProducts] = useState<Product[]>([]);
+
+
+  const [cart, setCart] = useState<Product[]>([]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch("/api/products");
+        if (response.ok) {
+          const data: Product[] = await response.json();
+          setProducts(data);
+          
+        } else {
+          console.error(`Failed to fetch: ${response.status}`);
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      }
+    }
+    fetchProducts();
+  }, []);
+
+
+  const addToCart = (product: Product) => {
+    const updatedCart = [...cart, product];
+    setCart(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
+  return (
+    <main>
+      <Header />
+      
+
+     <Suspense>
+     <div>
+        <h2 className="text-[32px] font-semibold mt-10 md:mt-[173px] text-center">
+          All Products
+        </h2>
+
+        <div className="ml-2 mb-10 grid grid-cols-2 lg:grid-cols-4 justify-center items-center gap-x-16 md:mt-10 md:ml-28 md:mr-28">
+          {products.map((product) => (
+            <div  key={product.id} className="card group md:w-80 md:h-96 h-56 w-56  relative cursor-pointer mt-24">
+              <div className="img relative">
+                <Link
+                  key={product.id}
+                  href={`/products/${product.id}`}
+                  passHref
+                >
+                  <Image
+                    
+                    className="md:w-[270px] md:h-[270px] h-[240px] w-[240px] object-cover"
+                    src={product.imageUrl}
+                    alt={product.name}
+                    width={200}
+                    height={200}
+                    
+                  />
+                </Link>
+                <div className="flex justify-between md:-mt-[295px] -mt-52 items-center">
+                  {product.isNew && (
+                    <button className="absolute w-[54px] h-[26px] text-[13px] rounded-md ml-4 bg-green-500 text-white md:mt-24">
+                      New
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="md:mt-[300px] mt-56">
+                    <h4 className="text-[16px] font-normal text-[#ffb132]">
+                      {product.name}
+                    </h4>
+                    <h5 className="mt-2 font-bold">
+                      ${product.salePrice || product.price}
+                    </h5>
+                  </div>
+                  
+                  <div
+                    className="md:w-[44px] md:h-[44px] h-10 w-10 md:mt-[300px] mt-52 md:mr-14 rounded-md  bg-[#ffb132] cursor-pointer"
+                    onClick={() => addToCart(product)}
+                  >
+                    <Image
+                      width={200}
+                      height={200}
+                      className="w-7 h-7 mt-1 ml-1  md:mt-2 md:ml-2"
+                      src="/cartwhite.png"
+                      alt="White Cart Icon"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      </Suspense>
+      <Footer />
+    </main>
+  );
+}
